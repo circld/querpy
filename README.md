@@ -31,3 +31,5 @@ Suppose you want to extend your query by joining to another table and adding col
     >>> new_query
     SELECT col1, new_tbl.id FROM ex_db.dbo.ex_table tbl JOIN ex_db.dbo.new_tbl new_tbl ON tbl.id = new_tbl.id WHERE col1 = 1 AND col2 IS NULL
 
+
+NOTE: the SQL constructed is **Not** validated.

@@ -20,6 +20,9 @@ __date__ = '2015-03-19'
 
 import re
 
+# TODO: add left/right/outer join functionality to JoinComponent (type property)
+# TODO: when using &= or |= with no existing args, omit first AND/OR,
+#       and += with list does same thing (AND)
 
 class Query(object):
 
@@ -84,7 +87,7 @@ class QueryComponent(object):
 
     def __add_item(self, item, prefix=''):
         if prefix:
-            prefix = ' ' + prefix + ' '
+            prefix = prefix + ' '
         if type(item) == str:
             self.components.append(''.join([prefix, item]))
         elif type(item) == list:
@@ -104,8 +107,8 @@ class QueryComponent(object):
 
 class SelectComponent(QueryComponent):
 
-    dist_pattern = re.compile('DISTINCT')
-    top_pattern = re.compile('TOP \d+')
+    dist_pattern = re.compile(' DISTINCT')
+    top_pattern = re.compile(' TOP \d+')
 
     def __init__(self, header):
         self.header = header + ' '
@@ -113,12 +116,6 @@ class SelectComponent(QueryComponent):
         self.dist = False
         self.topN = False
         self.sep = ', '
-
-    def __call__(self):
-        if self.components:
-            header = self.header + ' '
-            return header + self.sep.join(self.components)
-        return ''
 
     def clear(self):
         self.components = list()
