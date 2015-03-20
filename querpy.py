@@ -38,6 +38,24 @@ class Query(object):
         full_statement = re.subn(self.pattern, '', ' '.join(elements))[0]
         if full_statement:
             return full_statement
+        else:
+            return ''
+
+    @property
+    def distinct(self):
+        return self.s.distinct
+
+    @distinct.setter
+    def distinct(self, value):
+        self.s.distinct = value
+
+    @property
+    def top(self):
+        return self.s.top
+
+    @top.setter
+    def top(self, value):
+        self.s.top = value
 
     def __str__(self):
         return self.statement
@@ -74,15 +92,65 @@ class QueryComponent(object):
         else:
             raise ValueError('Item must be a string or list')
 
+    def clear(self):
+        self.components = list()
+
     def __call__(self):
-        if len(self.components) > 1:
-            return self.header + ' '.join(self.components)
+        if self.components:
+            return header + ' '.join(self.components)
         return ''
 
 
 class SelectComponent(QueryComponent):
 
+    dist_pattern = re.compile('DISTINCT')
+    top_pattern = re.compile('TOP \d+')
+
+    def __init__(self, header):
+        self.header = header + ' '
+        self.components = list()
+        self.topN = False
+        self.dist = False
+
     def __call__(self):
-        if len(self.components) > 1:
-            return self.header + ', '.join(self.components)
+        if self.components:
+            header = self.header + ' '
+            return header + ', '.join(self.components)
         return ''
+
+    @property
+    def distinct(self):
+        return self.dist
+
+    @distinct.setter
+    def distinct(self, value):
+        if type(value) != bool:
+            raise ValueError('distinct may only be set to True or False.')
+
+        # remove DISTINCT from header if self.dist changed from True to False
+        if self.dist != value:
+            if self.dist:
+                self.header = re.sub(self.dist_pattern, '', self.header)
+            else:
+                self.header += 'DISTINCT '
+
+        self.dist = value
+
+    @property
+    def top(self):
+        return self.topN
+
+    @top.setter
+    def top(self, value):
+        if type(value) != int and value is not False:
+            raise ValueError('top must be set to an integer or None')
+
+        # remove TOP N from header if self.top changed to None
+        if self.topN != value:
+            if self.topN:
+                self.header = re.sub(self.top_pattern, '', self.header)
+            else:
+                self.header += 'TOP ' + str(value) + ' '
+
+        self.topN = value
+        
