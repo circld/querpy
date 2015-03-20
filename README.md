@@ -1,5 +1,4 @@
-# querpy
-A Query class to make building SQL strings in Python as painless as possible.
+# querpy - to make building SQL strings in Python as painless as possible
 
 The Query class is intended to provide a high level interface for
 building/editing SQL query strings.
