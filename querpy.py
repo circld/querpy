@@ -28,9 +28,9 @@ class Query(object):
     def __init__(self):
         self.s = SelectComponent('SELECT')
         self.f = QueryComponent('FROM')
-        self.j = QueryComponent('JOIN')
+        self.j = JoinComponent('JOIN')
         self.w = QueryComponent('WHERE')
-        self.g = QueryComponent('GROUP BY')
+        self.g = QueryComponent('GROUP BY', sep=',')
 
     @property
     def statement(self):
@@ -65,9 +65,10 @@ class Query(object):
 
 class QueryComponent(object):
 
-    def __init__(self, header):
+    def __init__(self, header, sep=''):
         self.header = header + ' '
         self.components = list()
+        self.sep = sep + ' '
 
     def __iadd__(self, item):
         self.__add_item(item)
@@ -97,7 +98,7 @@ class QueryComponent(object):
 
     def __call__(self):
         if self.components:
-            return header + ' '.join(self.components)
+            return self.header + self.sep.join(self.components)
         return ''
 
 
@@ -109,14 +110,20 @@ class SelectComponent(QueryComponent):
     def __init__(self, header):
         self.header = header + ' '
         self.components = list()
-        self.topN = False
         self.dist = False
+        self.topN = False
+        self.sep = ', '
 
     def __call__(self):
         if self.components:
             header = self.header + ' '
-            return header + ', '.join(self.components)
+            return header + self.sep.join(self.components)
         return ''
+
+    def clear(self):
+        self.components = list()
+        self.dist = False
+        self.topN = False
 
     @property
     def distinct(self):
@@ -154,3 +161,11 @@ class SelectComponent(QueryComponent):
 
         self.topN = value
         
+
+class JoinComponent(QueryComponent):
+
+    def __call__(self):
+        if self.components:
+            components = [' '.join(['JOIN', i]) for i in self.components]
+            return self.sep.join(components)
+        return ''
