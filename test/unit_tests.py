@@ -1,6 +1,6 @@
 import unittest as ut
 import re
-from querpy import Query, QueryComponent, SelectComponent, JoinComponent
+from querpy import *
 
 
 class TestQueryComponent(ut.TestCase):
@@ -34,57 +34,8 @@ class TestQueryComponent(ut.TestCase):
         self.assertEqual(self.commas(),
                          self.commas.header + ', '.join(self.items))
 
-    def test_add_single_spaces_and(self):
-        self.commas += 'some stuff'
-        self.assertEqual(self.commas(), 
-                         self.commas.header + 'some stuff')
-
-    def test_add_list_spaces_and(self):
-        self.spaces += 'col0'
-        self.spaces &= self.items
-        self.assertEqual(
-            self.spaces(), 
-            self.spaces.header + 'col0 AND ' + ' AND '.join(self.items)
-        )
-
-    def test_add_list_commas_and(self):
-        self.commas += 'col0'
-        self.commas &= self.items
-        self.assertEqual(
-            self.commas(),
-            self.commas.header + 'col0, AND ' + ', AND '.join(self.items)
-        )
-
-    def test_add_single_spaces_or(self):
-        self.commas += 'some stuff'
-        self.assertEqual(self.commas(), 
-                         self.commas.header + 'some stuff')
-
-    def test_add_list_spaces_or(self):
-        self.spaces += 'col0'
-        self.spaces |= self.items
-        self.assertEqual(
-            self.spaces(), 
-            self.spaces.header + 'col0 OR ' + ' OR '.join(self.items)
-        )
-
-    def test_add_list_commas_or(self):
-        self.commas += 'col0'
-        self.commas |= self.items
-        self.assertEqual(
-            self.commas(),
-            self.commas.header + 'col0, OR ' + ', OR '.join(self.items)
-        )
-
     def test_add_wrong_type_raises_ValueError(self):
-        # want to keep __add_item private, so workaround to test error:
-        def is_error(val):
-            try:
-                self.commas += val
-            except ValueError:
-                raise ValueError
-
-        self.assertRaises(ValueError, is_error, 5)
+        self.assertRaises(ValueError, self.spaces.add_item, 5)
 
     def test_clear(self):
         self.commas += self.items
@@ -95,7 +46,7 @@ class TestQueryComponent(ut.TestCase):
 class TestSelectComponent(ut.TestCase):
     
     def setUp(self):
-        self.comp = SelectComponent('SELECT')
+        self.comp = SelectComponent()
         self.items = ['col1', 'col2', 'col3']
 
     def test_init(self):
@@ -161,11 +112,66 @@ class TestSelectComponent(ut.TestCase):
 class TestJoinComponent(ut.TestCase):
 
     def test_call_adds_joins(self):
-        join = JoinComponent('JOIN')
+        join = JoinComponent()
         join += 'tbl1 ON var1 = other1'
         join += 'tbl2 ON var2 = other2'
         self.assertEqual(
             join(), 'JOIN tbl1 ON var1 = other1 JOIN tbl2 ON var2 = other2'
+        )
+
+    def test_change_join_type(self):
+        join = JoinComponent()
+        join.join_type = 'LEFT'
+        join += ['tbl1 t1 ON t1.id = oid', 'tbl2 t2 ON t2.id = oid']
+        self.assertEqual(join.join_type, 'LEFT')
+        self.assertEqual(
+            join(),
+            'LEFT JOIN tbl1 t1 ON t1.id = oid LEFT JOIN tbl2 t2 ON t2.id = oid'
+        )
+        join.join_type = ''
+        join += 'tbl3 t3 ON t3.id = oid'
+        self.assertEqual(
+            join(),
+            'LEFT JOIN tbl1 t1 ON t1.id = oid LEFT JOIN tbl2 t2 ON t2.id = oid'
+            ' JOIN tbl3 t3 ON t3.id = oid'
+        )
+
+    def test_set_join_type_wrong_val_type_raises_error(self):
+        join = JoinComponent()
+        self.assertRaises(ValueError, join.__setattr__, 'join_type', 5)
+
+
+class TestWhereComponent(ut.TestCase):
+    # Will add extra AND or OR to first element;
+    # this is removed at the Query level (Query.statement)
+    def setUp(self):
+       self.comp = WhereComponent()
+       self.items = ['col1 = 1', 'col2 = 2', 'col3 IS NULL']
+        
+    def test_add_single_and(self):
+        self.comp += 'some stuff'
+        self.assertEqual(self.comp(), 
+                         self.comp.header + 'AND some stuff')
+
+    def test_add_list_and(self):
+        self.comp += 'col0'
+        self.comp &= self.items
+        self.assertEqual(
+            self.comp(), 
+            self.comp.header + 'AND col0 AND ' + ' AND '.join(self.items)
+        )
+
+    def test_add_single_or(self):
+        self.comp += 'some stuff'
+        self.assertEqual(self.comp(), 
+                         self.comp.header + 'AND some stuff')
+
+    def test_add_list_or(self):
+        self.comp |= 'col0'
+        self.comp |= self.items
+        self.assertEqual(
+            self.comp(), 
+            self.comp.header + 'OR col0 OR ' + ' OR '.join(self.items)
         )
 
 
@@ -232,6 +238,22 @@ class TestQuery(ut.TestCase):
         self.assertFalse(self.query.top)
         self.assertEqual(self.query.statement, 'SELECT hello')
 
+
+class TestJoinFunction(ut.TestCase):
+
+    def setUp(self):
+        self.item1 = ['tbl1 t1', 't1.id', 'oid']
+        self.item2 = ['tbl2 t2', 't2.id', 'oid', 't2.city', 'city']
+
+    def test_join_valid_items(self):
+        to_test1 = build_join(*self.item1)
+        to_test2 = build_join(*self.item2)
+        self.assertEqual(to_test1, 'tbl1 t1 ON t1.id = oid')
+        self.assertEqual(to_test2, 'tbl2 t2 ON t2.id = oid AND t2.city = city')
+
+    def test_invalid_num_items_passed_as_args(self):
+        invalid = self.item2[:-1]
+        self.assertRaises(BaseException, build_join, invalid)
 
 if __name__ == '__main__':
 

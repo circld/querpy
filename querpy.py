@@ -20,25 +20,24 @@ __date__ = '2015-03-19'
 
 import re
 
-# TODO: add left/right/outer join functionality to JoinComponent (type property)
-# TODO: when using &= or |= with no existing args, omit first AND/OR,
-#       and += with list does same thing (AND)
 
 class Query(object):
 
     pattern = re.compile('(^\s+|(?<=\s)\s+|\s+$)')
+    clean_up = re.compile('(?<=WHERE )\s.*?AND|\s.*?OR')
 
     def __init__(self):
-        self.s = SelectComponent('SELECT')
+        self.s = SelectComponent()
         self.f = QueryComponent('FROM')
-        self.j = JoinComponent('JOIN')
-        self.w = QueryComponent('WHERE')
+        self.j = JoinComponent()
+        self.w = WhereComponent()
         self.g = QueryComponent('GROUP BY', sep=',')
 
     @property
     def statement(self):
         elements = [self.s(), self.f(), self.j(), self.w(), self.g()]
-        full_statement = re.subn(self.pattern, '', ' '.join(elements))[0]
+        full_statement = re.subn(self.clean_up, '', ' '.join(elements))[0]
+        full_statement = re.subn(self.pattern, '', full_statement)[0]
         if full_statement:
             return full_statement
         else:
@@ -60,6 +59,17 @@ class Query(object):
     def top(self, value):
         self.s.top = value
 
+    @property
+    def join_type(self):
+        """
+        join_type prepends the type before each 'JOIN'
+        """
+        return self.j.type
+
+    @join_type.setter
+    def join_type(self, value):
+        self.j.type = value
+
     def __str__(self):
         return self.statement
 
@@ -74,18 +84,12 @@ class QueryComponent(object):
         self.sep = sep + ' '
 
     def __iadd__(self, item):
-        self.__add_item(item)
+        self.add_item(item)
         return self
 
-    def __iand__(self, item):
-        self.__add_item(item, 'AND')
-        return self
+    __iand__ = __ior__ = __iadd__
 
-    def __ior__(self, item):
-        self.__add_item(item, 'OR')
-        return self
-
-    def __add_item(self, item, prefix=''):
+    def add_item(self, item, prefix=''):
         if prefix:
             prefix = prefix + ' '
         if type(item) == str:
@@ -107,11 +111,12 @@ class QueryComponent(object):
 
 class SelectComponent(QueryComponent):
 
+    header = 'SELECT'
     dist_pattern = re.compile(' DISTINCT')
     top_pattern = re.compile(' TOP \d+')
 
-    def __init__(self, header):
-        self.header = header + ' '
+    def __init__(self):
+        self.header = self.header + ' '
         self.components = list()
         self.dist = False
         self.topN = False
@@ -161,8 +166,66 @@ class SelectComponent(QueryComponent):
 
 class JoinComponent(QueryComponent):
 
+    def __init__(self, sep = ''):
+        QueryComponent.__init__(self, '', sep)
+        self.type = ''
+
+    @property
+    def join_type(self):
+        return self.type
+
+    @join_type.setter
+    def join_type(self, value):
+        if type(value) != str:
+            raise ValueError('join_type must be set to a string value.')
+        self.type = value
+
+    def __iadd__(self, item):
+        if self.type:
+            join = ' '.join([self.type, 'JOIN'])
+        else:
+            join = 'JOIN'
+        self.add_item(item, join)
+        return self
+
+    __iand__ = __ior__ = __iadd__
+
     def __call__(self):
         if self.components:
-            components = [' '.join(['JOIN', i]) for i in self.components]
-            return self.sep.join(components)
+            return self.sep.join(self.components)
         return ''
+
+
+class WhereComponent(QueryComponent):
+
+    header = 'WHERE'
+
+    def __init__(self, sep=''):
+        self.header = self.header + ' '
+        QueryComponent.__init__(self, self.header, sep)
+
+    def __iand__(self, item):
+        self.add_item(item, 'AND')
+        return self
+
+    def __ior__(self, item):
+        self.add_item(item, 'OR')
+        return self
+
+    __iadd__ = __iand__
+
+
+def build_join(*args):
+    tbl_name = args[0]
+    args = args[1:]
+    if len(args) % 2 != 0 or args == ():
+        raise BaseException(
+            'You must provide an even number of columns to join on.'
+        )
+
+    args_expr = ['{0} = {1}'.format(args[2 * i], args[2 * i + 1]) 
+                 for i in xrange(len(args) / 2)]
+    args_expr = ' AND '.join(args_expr)
+    join_str = ' '.join([tbl_name, 'ON', args_expr])
+
+    return join_str
