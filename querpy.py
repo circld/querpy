@@ -26,6 +26,15 @@ class Query(object):
     pattern = re.compile('(^\s+|(?<=\s)\s+|\s+$)')
     clean_up = re.compile('(?<=WHERE )\s.*?AND|(?<=WHERE )\s.*?OR')
 
+    fmt = re.compile('\s(?=FROM)|\s(?=WHERE)|\s(?=GROUP BY)')
+    fmt_after = re.compile(
+        '(?<=SELECT)\s|(?<=FROM)\s|(?<=WHERE)\s|(?<=GROUP BY)\s'
+    )
+    fmt_join = re.compile('\s(?=JOIN)')
+    fmt_commas = re.compile('(?<=,)\s')
+    fmt_and = re.compile('AND')
+    fmt_or = re.compile('OR')
+
     def __init__(self):
         self.s = SelectComponent()
         self.f = QueryComponent('FROM')
@@ -71,7 +80,15 @@ class Query(object):
         self.j.type = value
 
     def __str__(self):
-        return self.statement
+        query = self.statement
+        query = re.subn(self.fmt, '\n  ', query)[0]
+        query = re.subn(self.fmt_after, '\n    ', query)[0]
+        query = re.subn(self.fmt_join, '\n      ', query)[0]
+        query = re.subn(self.fmt_commas, '\n    ', query)[0]
+        query = re.subn(self.fmt_and, '\n      AND', query)[0]
+        query = re.subn(self.fmt_or, '\n      OR', query)[0]
+        
+        return query
 
     __repr__ = __str__
 

@@ -200,11 +200,41 @@ class TestQuery(ut.TestCase):
                                  a = a, s = s
                              ))
 
-    def test_regex(self):
+    def test_whitespace_regex(self):
         string = '  leading space and  spaces    and trailing spaces      '
         subbed = re.subn(self.query.pattern, '', string)[0]
         self.assertEqual(subbed, 
                          'leading space and spaces and trailing spaces')
+
+    def test_clean_up_regex(self):
+        string = 'WHERE   AND WHERE  OR'
+        subbed = re.subn(self.query.clean_up, '', string)[0]
+        self.assertEqual(subbed, 
+                         'WHERE  WHERE ')
+
+    def test_fmt_regex(self):
+        string = ' FROM stuff WHERE otherstuff GROUP BY stuff'
+        subbed = re.subn(self.query.fmt, '\n', string)[0]
+        self.assertEqual(subbed, 
+                         '\nFROM stuff\nWHERE otherstuff\nGROUP BY stuff')
+
+    def test_fmt_after_regex(self):
+        string = 'SELECT col1 FROM tbl1 WHERE cond1 GROUP BY col1'
+        subbed = re.subn(self.query.fmt_after, '\n', string)[0]
+        self.assertEqual(subbed, 
+                         'SELECT\ncol1 FROM\ntbl1 WHERE\ncond1 GROUP BY\ncol1')
+
+    def test_fmt_join_regex(self):
+        string = 'JOIN JOIN JOIN'
+        subbed = re.subn(self.query.fmt_join, '\n', string)[0]
+        self.assertEqual(subbed, 
+                         'JOIN\nJOIN\nJOIN')
+
+    def test_fmt_commas_regex(self):
+        string = 'SELECT col1 [c1], col2 [c2], col3 [c3]'
+        subbed = re.subn(self.query.fmt_commas, '\n', string)[0]
+        self.assertEqual(subbed, 
+                         'SELECT col1 [c1],\ncol2 [c2],\ncol3 [c3]')
 
     def test_statement(self):
         self.query.s += ['col1', 'col2']
@@ -254,6 +284,7 @@ class TestJoinFunction(ut.TestCase):
     def test_invalid_num_items_passed_as_args(self):
         invalid = self.item2[:-1]
         self.assertRaises(BaseException, build_join, invalid)
+
 
 if __name__ == '__main__':
 
