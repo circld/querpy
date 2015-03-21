@@ -79,11 +79,11 @@ class Query(object):
         """
         join_type prepends the type before each 'JOIN'
         """
-        return self.j.type
+        return self.j.join_type
 
     @join_type.setter
     def join_type(self, value):
-        self.j.type = value
+        self.j.join_type = value
 
     def __str__(self):
         query = self.statement

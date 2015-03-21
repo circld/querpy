@@ -111,34 +111,40 @@ class TestSelectComponent(ut.TestCase):
 
 class TestJoinComponent(ut.TestCase):
 
+    def setUp(self):
+        self.join = JoinComponent()
+        self.tbls = ['tbl1 t1 ON t1.id = oid', 'tbl2 t2 ON t2.id = oid']
+
     def test_call_adds_joins(self):
-        join = JoinComponent()
-        join += 'tbl1 ON var1 = other1'
-        join += 'tbl2 ON var2 = other2'
+        self.join += self.tbls[0]
+        self.join += self.tbls[1]
         self.assertEqual(
-            join(), 'JOIN tbl1 ON var1 = other1 JOIN tbl2 ON var2 = other2'
+            self.join(), 
+            'JOIN tbl1 t1 ON t1.id = oid JOIN tbl2 t2 ON t2.id = oid'
         )
 
     def test_change_join_type(self):
-        join = JoinComponent()
-        join.join_type = 'LEFT'
-        join += ['tbl1 t1 ON t1.id = oid', 'tbl2 t2 ON t2.id = oid']
-        self.assertEqual(join.join_type, 'LEFT')
+        self.join.join_type = 'LEFT'
+        self.join += self.tbls
+        self.assertEqual(self.join.join_type, 'LEFT')
         self.assertEqual(
-            join(),
+            self.join(),
             'LEFT JOIN tbl1 t1 ON t1.id = oid LEFT JOIN tbl2 t2 ON t2.id = oid'
         )
-        join.join_type = ''
-        join += 'tbl3 t3 ON t3.id = oid'
+        self.join.join_type = ''
+        self.join += 'tbl3 t3 ON t3.id = oid'
         self.assertEqual(
-            join(),
+            self.join(),
             'LEFT JOIN tbl1 t1 ON t1.id = oid LEFT JOIN tbl2 t2 ON t2.id = oid'
             ' JOIN tbl3 t3 ON t3.id = oid'
         )
 
+    def test_pass_lower_join_type_converted_to_upper(self):
+        self.join.join_type = 'left'
+        self.assertEquals(self.join.join_type, 'LEFT')
+
     def test_set_join_type_wrong_val_type_raises_error(self):
-        join = JoinComponent()
-        self.assertRaises(ValueError, join.__setattr__, 'join_type', 5)
+        self.assertRaises(ValueError, self.join.__setattr__, 'join_type', 5)
 
 
 class TestWhereComponent(ut.TestCase):
@@ -254,6 +260,9 @@ class TestQuery(ut.TestCase):
             '\n      AND col5 = col6'
         )
 
+    def test_pass_lower_join_type_converted_to_upper(self):
+        self.query.join_type = 'left'
+        self.assertEquals(self.query.join_type, 'LEFT')
 
     def test_statement(self):
         self.query.s += ['col1', 'col2']
