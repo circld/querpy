@@ -30,9 +30,15 @@ class Query(object):
     fmt_after = re.compile(
         '(?<=SELECT)\s|(?<=FROM)\s|(?<=WHERE)\s|(?<=GROUP BY)\s'
     )
-    fmt_join = re.compile('\s(?=JOIN)')
+    fmt_join = re.compile(
+        '\s(?={l} JOIN)|\s(?={o} JOIN)|\s(?={r} JOIN)'
+        '|\s(?={i} JOIN)|(?<!{l})\s(?=JOIN)|(?<!{r})\s(?=JOIN)'
+        '&(?<!{i})\s(?=JOIN)&(?<!{o})\s(?=JOIN)'.format(
+            r = 'RIGHT', l = 'LEFT', i = 'INNER', o = 'OUTER'
+        )
+    )
     fmt_commas = re.compile('(?<=,)\s')
-    fmt_and = re.compile('AND')
+    fmt_and = re.compile('(?<=WHERE).*$', flags=re.S)
     fmt_or = re.compile('OR')
 
     def __init__(self):
@@ -85,7 +91,7 @@ class Query(object):
         query = re.subn(self.fmt_after, '\n    ', query)[0]
         query = re.subn(self.fmt_join, '\n      ', query)[0]
         query = re.subn(self.fmt_commas, '\n    ', query)[0]
-        query = re.subn(self.fmt_and, '\n      AND', query)[0]
+        query = re.subn(self.fmt_and, replace_and, query)[0]
         query = re.subn(self.fmt_or, '\n      OR', query)[0]
         
         return query
@@ -195,7 +201,7 @@ class JoinComponent(QueryComponent):
     def join_type(self, value):
         if type(value) != str:
             raise ValueError('join_type must be set to a string value.')
-        self.type = value
+        self.type = value.upper()
 
     def __iadd__(self, item):
         if self.type:
@@ -246,3 +252,11 @@ def build_join(*args):
     join_str = ' '.join([tbl_name, 'ON', args_expr])
 
     return join_str
+
+
+def replace_and(match):
+    """
+    helper function for indenting AND in WHERE clause
+    """
+    string = match.group(0)
+    return re.subn('AND', '\n      AND', string)[0]

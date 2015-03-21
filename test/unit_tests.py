@@ -229,12 +229,31 @@ class TestQuery(ut.TestCase):
         subbed = re.subn(self.query.fmt_join, '\n', string)[0]
         self.assertEqual(subbed, 
                          'JOIN\nJOIN\nJOIN')
+        string2 = 'stuff LEFT JOIN other stuff'
+        subbed2 = re.subn(self.query.fmt_join, '\n', string2)[0]
+        self.assertEqual(subbed2, 
+                         'stuff\nLEFT JOIN other stuff')
 
     def test_fmt_commas_regex(self):
         string = 'SELECT col1 [c1], col2 [c2], col3 [c3]'
         subbed = re.subn(self.query.fmt_commas, '\n', string)[0]
         self.assertEqual(subbed, 
                          'SELECT col1 [c1],\ncol2 [c2],\ncol3 [c3]')
+
+    def test_fmt_and(self):
+        # test that AND is indented in WHERE clause but not JOIN
+        string = (
+            'JOIN tbl2 ON col1 = col2 AND col3 = col4 '
+            'WHERE col1 = col3 AND col4 = col5 AND col5 = col6'
+        )
+        subbed = re.subn(self.query.fmt_and, replace_and, string)[0]
+        self.assertEqual(
+            subbed,
+            'JOIN tbl2 ON col1 = col2 AND col3 = col4 '
+            'WHERE col1 = col3 \n      AND col4 = col5 '
+            '\n      AND col5 = col6'
+        )
+
 
     def test_statement(self):
         self.query.s += ['col1', 'col2']
