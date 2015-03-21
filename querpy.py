@@ -24,7 +24,7 @@ import re
 class Query(object):
 
     pattern = re.compile('(^\s+|(?<=\s)\s+|\s+$)')
-    clean_up = re.compile('(?<=WHERE )\s.*?AND|\s.*?OR')
+    clean_up = re.compile('(?<=WHERE )\s.*?AND|(?<=WHERE )\s.*?OR')
 
     def __init__(self):
         self.s = SelectComponent()
