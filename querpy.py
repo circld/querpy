@@ -247,7 +247,7 @@ def build_join(*args):
         )
 
     args_expr = ['{0} = {1}'.format(args[2 * i], args[2 * i + 1]) 
-                 for i in xrange(len(args) / 2)]
+                 for i in range(int(len(args) / 2))]  # int() for Python 3
     args_expr = ' AND '.join(args_expr)
     join_str = ' '.join([tbl_name, 'ON', args_expr])
 
