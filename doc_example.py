@@ -17,6 +17,8 @@ commands = [
     ">>> new_query.s.clear()  # clear SELECT component",
     ">>> new_query.s += 'col1'",
     ">>> new_query",
+    ">>> new_query.s[0] = 'col2'",
+    ">>> print new_query.s",
     ">>> new_query.j += 'ex_db.dbo.new_tbl nt ON tbl.id = nt.id'",
     ">>> new_query.s += 'nt.id'",
     ">>> new_query",

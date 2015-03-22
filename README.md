@@ -49,6 +49,13 @@ The Query class avoids redundancy for similar queries by allowing you to modify 
         col1 = 1 
           OR col2 IS NULL
 
+Another way to edit the SELECT clause is to use indexing:
+
+>>> new_query.s[0] = 'col2'
+>>> print new_query.s  # printing the component shows indices
+index: item
+0: 'col2'
+
 Suppose you want to extend your query by joining to another table and adding columns from this table:
 
     >>> new_query.j += 'ex_db.dbo.new_tbl nt ON tbl.id = nt.id'
