@@ -1,14 +1,13 @@
 import unittest as ut
-import re
 from querpy import *
 
 
 class TestQueryComponent(ut.TestCase):
 
     def setUp(self):
-       self.spaces = QueryComponent('COMMAND')
-       self.commas = QueryComponent('COMMAND', ',')
-       self.items = ['col1', 'col2', 'col3']
+        self.spaces = QueryComponent('COMMAND')
+        self.commas = QueryComponent('COMMAND', ',')
+        self.items = ['col1', 'col2', 'col3']
 
     def test_init(self):
         for comp, sep in zip([self.spaces, self.commas], [' ', ', ']):
@@ -16,13 +15,22 @@ class TestQueryComponent(ut.TestCase):
             self.assertEqual(comp.components, [])
             self.assertEqual(comp.sep, sep)
 
-    def test_empty_object_print(self):
+    def test_empty_object_call(self):
         self.assertEqual(self.spaces(), '')
 
-    def test_nonempty_object_print(self):
+    def test_nonempty_object_call(self):
         self.spaces += 'some stuff'
         self.assertNotEqual(self.spaces(), '')
         self.assertEqual(self.spaces(), self.spaces.header + 'some stuff')
+
+    def test_empty_object_print(self):
+        self.assertEqual(self.spaces.__str__(), 'index: item\n')
+
+    def test_nonempty_object_print(self):
+        self.commas += self.items
+        out = "index: item\n0: 'col1', 1: 'col2', 2: 'col3'"
+        self.assertEqual(self.commas.__str__(), out)
+        self.assertEqual(self.commas.__repr__(), out)
 
     def test_add_list_spaces(self):
         self.spaces += self.items
@@ -210,13 +218,13 @@ class TestQuery(ut.TestCase):
             self.assertTrue(
                 isinstance(getattr(self.query, a), c),
                 'self.query.{a} is not an instance of {c}'.format(
-                    a = a, c = c.__name__
+                    a=a, c=c.__name__
                 )
             )
         for a, s in zip(attrs, seps):
             self.assertEqual(getattr(self.query, a).sep, s,
                              'self.query.{a}.sep != {s})'.format(
-                                 a = a, s = s
+                                 a=a, s=s
                              ))
 
     def test_whitespace_regex(self):
