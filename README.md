@@ -51,10 +51,10 @@ The Query class avoids redundancy for similar queries by allowing you to modify 
 
 Another way to edit the SELECT clause is to use indexing:
 
->>> new_query.s[0] = 'col2'
->>> print new_query.s  # printing the component shows indices
-index: item
-0: 'col2'
+    >>> new_query.s[0] = 'col2'
+    >>> print new_query.s  # printing the component shows indices
+    index: item
+    0: 'col2'
 
 Suppose you want to extend your query by joining to another table and adding columns from this table:
 
