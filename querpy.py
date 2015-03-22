@@ -251,6 +251,19 @@ class WhereComponent(QueryComponent):
 
     __iadd__ = __iand__
 
+    def __str__(self):
+        components = self.components
+        if components:
+            components = self.components[:]
+            components[0] = re.sub('^AND |^OR ', '', components[0])
+        to_print = list()
+        for n, c in enumerate(components):
+            to_print.append("{0}: '{1}'".format(n, c))
+        return 'index: item\n' + ', '.join(to_print)
+
+    __repr__ = __str__
+
+
 
 def build_join(*args):
     tbl_name = args[0]

@@ -201,6 +201,20 @@ class TestWhereComponent(ut.TestCase):
             self.comp.header + 'OR col0 OR ' + ' OR '.join(self.items)
         )
 
+    def test_print_empty(self):
+        self.assertEqual(self.comp.__str__(), 'index: item\n')
+        self.assertEqual(self.comp.__repr__(), 'index: item\n')
+
+    def test_print_nonempty(self):
+        self.comp += self.items
+        out = "index: item\n0: 'col1 = 1', 1: 'AND col2 = 2', " \
+              "2: 'AND col3 IS NULL'"
+        self.assertEquals(self.comp.__str__(), out)
+        self.assertEquals(self.comp.__repr__(), out)
+        self.comp.clear()
+        self.comp |= 'col1'
+        self.assertEquals(self.comp.__str__(), "index: item\n0: 'col1'")
+        self.assertEquals(self.comp.__repr__(), "index: item\n0: 'col1'")
 
 class TestQuery(ut.TestCase):
 
