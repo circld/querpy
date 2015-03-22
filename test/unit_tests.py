@@ -42,6 +42,19 @@ class TestQueryComponent(ut.TestCase):
         self.commas.clear()
         self.assertEqual(self.commas(), '')
 
+    def test_indexing(self):
+        self.commas += self.items
+        self.commas[0] = 'NEW_VALUE'
+        self.assertEquals(self.commas.components, ['NEW_VALUE', 'col2', 'col3'])
+
+    def test_iteration(self):
+        self.spaces += self.items
+        self.commas += self.items
+        spaces = [s for s in self.spaces]
+        commas = [c for c in self.commas]
+        self.assertEquals(spaces, ['col1', 'col2', 'col3'])
+        self.assertEquals(commas, ['col1', 'col2', 'col3'])
+
 
 class TestSelectComponent(ut.TestCase):
     

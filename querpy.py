@@ -131,6 +131,20 @@ class QueryComponent(object):
             return self.header + self.sep.join(self.components)
         return ''
 
+    def __getitem__(self, key):
+        return self.components[key]
+
+    def __setitem__(self, key, value):
+        self.components[key] = value
+
+    def __str__(self):
+        to_print = list()
+        for n, c in enumerate(self.components):
+            to_print.append("{0}: '{1}'".format(n, c))
+        return 'index: item\n' + ', '.join(to_print)
+
+    __repr__ = __str__
+
 
 class SelectComponent(QueryComponent):
 
