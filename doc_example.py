@@ -28,14 +28,15 @@ commands = [
     ">>> new_query.j += build_join('ex_db.dbo.new_tbl nt', 'tbl.id', 'nt.id',"
     " 'tbl.city', 'nt.city')",
     ">>> new_query.join_type = ''  # set back to regular join",
-    ">>> new_query"
+    ">>> new_query",
+    ">>> new_query.statement",
 ]
 
 def main():
 
     for c in commands:
         print c
-        if c == '>>> new_query':
+        if c in ('>>> new_query', '>>> new_query.statement'):
             print eval(c[4:])
         else:
             exec(c[4:])
