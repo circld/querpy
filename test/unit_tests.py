@@ -331,6 +331,22 @@ class TestQuery(ut.TestCase):
         self.assertFalse(self.query.top)
         self.assertEqual(self.query.statement, 'SELECT hello')
 
+    def test_print(self):
+        self.query.s += ['col1', 'col2', 'col3']
+        self.query.f += 'tbl1 t1'
+        self.query.j += build_join('tbl2 t2', 't1.id', 't2.id', 't1.city',
+                                   't2.city')
+        self.query.w += ['col1 IS NULL', 'col4 BETWEEN col1 AND col2',
+                         'col2 = t1.id', 'col3 BETWEEN 0 AND 10']
+        expected = ''.join([
+            'SELECT\n    col1,\n    col2,\n    col3',
+            '\n  FROM\n    tbl1 t1',
+            '\n      JOIN tbl2 t2 ON t1.id = t2.id AND t1.city = t2.city',
+            '\n  WHERE\n    col1 IS NULL \n      AND col4 BETWEEN col1 AND col2 ',
+            '\n      AND col2 = t1.id \n      AND col3 BETWEEN 0 AND 10'
+        ])
+        self.assertEquals(self.query.__str__(), expected)
+        self.assertEquals(self.query.__repr__(), expected)
 
 class TestJoinFunction(ut.TestCase):
 

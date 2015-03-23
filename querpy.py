@@ -34,7 +34,7 @@ class Query(object):
         '\s(?={l} JOIN)|\s(?={o} JOIN)|\s(?={r} JOIN)'
         '|\s(?={i} JOIN)|(?<!{l})\s(?=JOIN)|(?<!{r})\s(?=JOIN)'
         '&(?<!{i})\s(?=JOIN)&(?<!{o})\s(?=JOIN)'.format(
-            r = 'RIGHT', l = 'LEFT', i = 'INNER', o = 'OUTER'
+            r='RIGHT', l='LEFT', i='INNER', o='OUTER'
         )
     )
     fmt_commas = re.compile('(?<=,)\s')
@@ -286,4 +286,6 @@ def replace_and(match):
     helper function for indenting AND in WHERE clause
     """
     string = match.group(0)
-    return re.subn('AND', '\n      AND', string)[0]
+    raw_newlines = re.subn('AND', '\n      AND', string)[0]
+    out = re.subn('(?<=BETWEEN)( \w+? )\n\s*?(AND)', r'\1\2', raw_newlines)[0]
+    return out
