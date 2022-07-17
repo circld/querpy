@@ -12,13 +12,13 @@ commands = [
     ">>> new_query.s += 'col4'  # can take single strings",
     ">>> new_query.w += 'col1 = 1'  # can also take a list",
     ">>> new_query.w |= 'col2 IS NULL'  # handles &= and |= operators",
-    ">>> print new_query",
+    ">>> print(new_query)",
     ">>> new_query",
     ">>> new_query.s.clear()  # clear SELECT component",
     ">>> new_query.s += 'col1'",
     ">>> new_query",
     ">>> new_query.s[0] = 'col2'",
-    ">>> print new_query.s",
+    ">>> print(new_query.s)",
     ">>> new_query.j += 'ex_db.dbo.new_tbl nt ON tbl.id = nt.id'",
     ">>> new_query.s += 'nt.id'",
     ">>> new_query",
@@ -35,9 +35,9 @@ commands = [
 def main():
 
     for c in commands:
-        print c
+        print(c)
         if c in ('>>> new_query', '>>> new_query.statement'):
-            print eval(c[4:])
+            print(eval(c[4:]))
         else:
             exec(c[4:])
 
