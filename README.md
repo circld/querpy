@@ -6,6 +6,7 @@ building/editing SQL query strings.
 This library should now support python 3.
 
 
+
 Example usage:
 ```python
     >>> from querpy import Query
