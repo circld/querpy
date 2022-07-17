@@ -3,6 +3,9 @@
 The Query class is intended to provide a high level interface for
 building/editing SQL query strings.
 
+This library should now support python 3.
+
+
 Example usage:
 ```python
     >>> from querpy import Query
@@ -96,4 +99,3 @@ When your query string is ready to be passed to the function that will execute t
 ```
 NOTE: the SQL constructed is **not** validated.
 
-Test edit
