@@ -75,12 +75,11 @@ Suppose you want to extend your query by joining to another table and adding col
         col1 = 1 
           OR col2 IS NULL
 ```
-While this works, we are returning to the land of long strings. We can do the same thing (n.b. we'll LEFT JOIN this time) using the build_join helper function to make the join step more readable and modular:
+While this works, we are returning to the land of long strings. We can do the same thing (n.b. we'll LEFT JOIN this time) using the Query.build_join helper function to make the join step more readable and modular:
 ```python	
-    >>> from querpy import build_join
     >>> new_query.j.clear()
     >>> new_query.join_type = 'LEFT'
-    >>> new_query.j += build_join('ex_db.dbo.new_tbl nt', 'tbl.id', 'nt.id', 'tbl.city', 'nt.city')
+    >>> new_query.j += Query.build_join('ex_db.dbo.new_tbl nt', 'tbl.id', 'nt.id', 'tbl.city', 'nt.city')
     >>> new_query.join_type = ''  # set back to regular join
     >>> new_query
     SELECT
