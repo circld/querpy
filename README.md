@@ -97,5 +97,33 @@ When your query string is ready to be passed to the function that will execute t
     >>> new_query.statement
     SELECT col2, nt.id FROM ex_db.dbo.ex_table tbl LEFT JOIN ex_db.dbo.new_tbl nt ON tbl.id = nt.id AND tbl.city = nt.city WHERE col1 = 1 OR col2 IS NULL
 ```
+
+You can also prepend a CREATE TABLE <> AS to the SQL
+```python
+    >>> new_query.j += 'ex_db.dbo.new_tbl nt ON tbl.id = nt.id'
+    >>> new_query.s += 'nt.id'
+    >>> new_query.g += 'col1'
+    >>> new_query.l += ' 10, 100' 
+    >>> new_query.ci += ' db_name.tbl_name ' 
+    >>> new_query
+    CREATE TABLE db_name.tbl_name AS 
+    SELECT
+        col1,
+        nt.id
+      FROM
+        ex_db.dbo.ex_table tbl
+          JOIN ex_db.dbo.new_tbl nt ON tbl.id = nt.id
+      WHERE
+        col1 = 1 
+          OR col2 IS NULL
+      GROUP BY 
+        col1
+      LIMIT 10, 100
+```
+
+
+Suppose you want to extend your query by joining to another table and adding columns from this table:
+
+
 NOTE: the SQL constructed is **not** validated.
 
