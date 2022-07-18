@@ -23,8 +23,10 @@ import re
 
 class Query(object):
 
-    pattern = re.compile('(^\s+|(?<=\s)\s+|\s+$)')
-    clean_up = re.compile('(?<=WHERE )\s.*?AND|(?<=WHERE )\s.*?OR')
+    # A series of precompiled regex to perfom various SQL related string tasks
+
+    whitespace_regex = re.compile('(^\s+|(?<=\s)\s+|\s+$)')
+    where_clean_up = re.compile('(?<=WHERE )\s.*?AND|(?<=WHERE )\s.*?OR')
 
     fmt = re.compile('\s(?=FROM)|\s(?=WHERE)|\s(?=GROUP BY)')
     fmt_after = re.compile(
@@ -51,8 +53,8 @@ class Query(object):
     @property
     def statement(self):
         elements = [self.s(), self.f(), self.j(), self.w(), self.g()]
-        full_statement = re.subn(self.clean_up, '', ' '.join(elements))[0]
-        full_statement = re.subn(self.pattern, '', full_statement)[0]
+        full_statement = re.subn(self.where_clean_up, '', ' '.join(elements))[0] # removes messy contents of WHERE statements? Note sure why this is needed or why it is run on the whole SQL statement
+        full_statement = re.subn(self.whitespace_regex, '', full_statement)[0]  # flattens pretty print SQL to a single line by removing whitespace
         if full_statement:
             return full_statement
         else:
