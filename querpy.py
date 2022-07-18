@@ -13,9 +13,9 @@ Example usage:
     >>> new_query  # should print full query
 """
 
-__author__ = 'Paul Garaud'
-__version__ = '0.1'
-__date__ = '2015-03-19'
+__author__ = 'Paul Garaud, Fred Trotter'
+__version__ = '0.2'
+__date__ = '2022-06-18'
 
 
 import re
@@ -27,9 +27,11 @@ class Query(object):
 
     # These help with merging all of the statements into a single line
     whitespace_regex = re.compile('(^\s+|(?<=\s)\s+|\s+$)')
-    where_clean_up = re.compile('(?<=WHERE )\s.*?AND|(?<=WHERE )\s.*?OR')
+    #the design of the where list is such that every element of the list has an 'AND' or 'OR' as a prefix..
+    #but the first one after the where does not need that.. so we just look for a WHERE OR or a WHERE AND and remove the 'OR' or 'AND'
+    where_clean_up = re.compile('(?<=WHERE )\s.*?AND|(?<=WHERE )\s.*?OR') 
 
-    # These help with the SQL pretty print implementation
+    # All of these fmt_(something) help with the SQL pretty print implementation
     fmt = re.compile('\s(?=FROM)|\s(?=WHERE)|\s(?=GROUP BY)')
     fmt_after = re.compile(
         '(?<=SELECT)\s|(?<=FROM)\s|(?<=WHERE)\s|(?<=GROUP BY)\s'
@@ -49,6 +51,7 @@ class Query(object):
 
 
     def __init__(self):
+        self.ci = CreateInsertComponent()
         self.s = SelectComponent()
         self.f = QueryComponent('FROM')
         self.j = JoinComponent()
@@ -58,7 +61,8 @@ class Query(object):
     @property
     def statement(self):
         # Merges the various SQL componenets into a single SQL statement
-        elements = [self.s(), self.f(), self.j(), self.w(), self.g()]
+        print(self.ci())
+        elements = [self.ci(), self.s(), self.f(), self.j(), self.w(), self.g()]
         full_statement = re.subn(self.where_clean_up, '', ' '.join(elements))[0] # removes messy contents of WHERE statements? Note sure why this is needed or why it is run on the whole SQL statement
         full_statement = re.subn(self.whitespace_regex, '', full_statement)[0]  # flattens pretty print SQL to a single line by removing whitespace
         if full_statement:
@@ -100,7 +104,7 @@ class Query(object):
         # This section could be better implemented using a call to sqlpars
         # https://github.com/andialbrecht/sqlparse
         # But doing it this way keeps the dependancies low, which is important
-        query = self.statement	# This is the single line query gotten from the statement function
+        query = self.statement  # This is the single line query gotten from the statement function
         query = re.subn(self.fmt, '\n  ', query)[0]
         query = re.subn(self.fmt_after, '\n    ', query)[0]
         query = re.subn(self.fmt_join, '\n      ', query)[0]
@@ -146,8 +150,6 @@ class Query(object):
 
 
 
-
-
 class QueryComponent(object):
     #This is the base class that everything else will be added to..
     # this is where the magic of += is handled, which makes it easy 
@@ -179,6 +181,8 @@ class QueryComponent(object):
         self.components = list()
 
     def __call__(self):
+        # This is the function that converts the list of items in the querycomponent into a long string
+        # it is always prefixed by the header..
         if self.components:
             return self.header + self.sep.join(self.components)
         return ''
@@ -196,6 +200,30 @@ class QueryComponent(object):
         return 'index: item\n' + ', '.join(to_print)
 
     __repr__ = __str__
+
+class CreateInsertComponent(QueryComponent):
+    # Implements the very first part of a CREATE TABLE db.table AS or INSERT INTO db.table
+    # depending on whether the is_first_data_add setting has been set
+
+
+    is_first_data_add = True
+
+    def __iadd__(self, item):
+        #we only have the one item.. 
+        self.components = list() # overwrites whatever was there
+        if self.is_first_data_add:
+            #Then this is a CREATE TABLE AS clause
+            self.header = 'CREATE TABLE ' + item + " AS \n" 
+        else:
+            self.header = 'INSERT INTO ' + item + " \n"
+        return self
+
+    def __init__(self):
+        self.header = '' # by default, this is not used.
+        self.components = list()
+
+    def __call__(self):
+        return self.header
 
 
 class SelectComponent(QueryComponent):

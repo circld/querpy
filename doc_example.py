@@ -27,6 +27,7 @@ commands = [
     ">>> new_query.j += Query.build_join('ex_db.dbo.new_tbl nt', 'tbl.id', 'nt.id',"
     " 'tbl.city', 'nt.city')",
     ">>> new_query.join_type = ''  # set back to regular join",
+    ">>> new_query.ci += 'thisDB.thatTable'  # set back to regular join",
     ">>> new_query",
     ">>> new_query.statement",
 ]
