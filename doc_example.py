@@ -28,7 +28,7 @@ commands = [
     " 'tbl.city', 'nt.city')",
     ">>> new_query.join_type = ''  # set back to regular join",
     ">>> new_query.ci += 'thisDB.thatTable'  # set back to regular join",
-    ">>> new_query.li += ' 10, 100' ",
+    ">>> new_query.l += ' 10, 100' ",
     ">>> new_query.g += 'col1' ",
     ">>> new_query.g += 'col3' ",
     ">>> new_query",

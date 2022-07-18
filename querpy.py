@@ -57,13 +57,13 @@ class Query(object):
         self.j = JoinComponent()
         self.w = WhereComponent()
         self.g = QueryComponent('GROUP BY', sep=',')
-        self.li = LimitComponent()
+        self.l = LimitComponent()
 
 
     @property
     def statement(self):
         # Merges the various SQL componenets into a single SQL statement
-        elements = [self.ci(), self.s(), self.f(), self.j(), self.w(), self.g(), self.li()]
+        elements = [self.ci(), self.s(), self.f(), self.j(), self.w(), self.g(), self.l()]
         full_statement = re.subn(self.where_clean_up, '', ' '.join(elements))[0] # removes messy contents of WHERE statements? Note sure why this is needed or why it is run on the whole SQL statement
         full_statement = re.subn(self.whitespace_regex, '', full_statement)[0]  # flattens pretty print SQL to a single line by removing whitespace
         if full_statement:
