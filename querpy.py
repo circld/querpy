@@ -23,9 +23,13 @@ import re
 
 class Query(object):
 
-    pattern = re.compile('(^\s+|(?<=\s)\s+|\s+$)')
-    clean_up = re.compile('(?<=WHERE )\s.*?AND|(?<=WHERE )\s.*?OR')
+    # A series of precompiled regex to perfom various SQL related string tasks
 
+    # These help with merging all of the statements into a single line
+    whitespace_regex = re.compile('(^\s+|(?<=\s)\s+|\s+$)')
+    where_clean_up = re.compile('(?<=WHERE )\s.*?AND|(?<=WHERE )\s.*?OR')
+
+    # These help with the SQL pretty print implementation
     fmt = re.compile('\s(?=FROM)|\s(?=WHERE)|\s(?=GROUP BY)')
     fmt_after = re.compile(
         '(?<=SELECT)\s|(?<=FROM)\s|(?<=WHERE)\s|(?<=GROUP BY)\s'
@@ -41,6 +45,9 @@ class Query(object):
     fmt_and = re.compile('(?<=WHERE).*$', flags=re.S)
     fmt_or = re.compile('OR')
 
+
+
+
     def __init__(self):
         self.s = SelectComponent()
         self.f = QueryComponent('FROM')
@@ -50,10 +57,12 @@ class Query(object):
 
     @property
     def statement(self):
+        # Merges the various SQL componenets into a single SQL statement
         elements = [self.s(), self.f(), self.j(), self.w(), self.g()]
-        full_statement = re.subn(self.clean_up, '', ' '.join(elements))[0]
-        full_statement = re.subn(self.pattern, '', full_statement)[0]
+        full_statement = re.subn(self.where_clean_up, '', ' '.join(elements))[0] # removes messy contents of WHERE statements? Note sure why this is needed or why it is run on the whole SQL statement
+        full_statement = re.subn(self.whitespace_regex, '', full_statement)[0]  # flattens pretty print SQL to a single line by removing whitespace
         if full_statement:
+            #Then our regex and merging has worked and return the single line of SQL
             return full_statement
         else:
             return ''
@@ -86,12 +95,17 @@ class Query(object):
         self.j.join_type = value
 
     def __str__(self):
-        query = self.statement
+        # When we just print the object, we want to assume that we will pretty-print the SQL.
+        # This section handles the conversion of the single line query, into a pretty printed version..
+        # This section could be better implemented using a call to sqlpars
+        # https://github.com/andialbrecht/sqlparse
+        # But doing it this way keeps the dependancies low, which is important
+        query = self.statement	# This is the single line query gotten from the statement function
         query = re.subn(self.fmt, '\n  ', query)[0]
         query = re.subn(self.fmt_after, '\n    ', query)[0]
         query = re.subn(self.fmt_join, '\n      ', query)[0]
         query = re.subn(self.fmt_commas, '\n    ', query)[0]
-        query = re.subn(self.fmt_and, replace_and, query)[0]
+        query = re.subn(self.fmt_and, Query.replace_and, query)[0]
         query = re.subn(self.fmt_or, '\n      OR', query)[0]
         
         return query
@@ -99,7 +113,45 @@ class Query(object):
     __repr__ = __str__
 
 
+    @staticmethod
+    def build_join(*args):
+        # A static helper function to build a join
+        # this assumes that the first argument is the table...
+        # and that every subsequent pair of arguments is something to join 'ON'
+
+        tbl_name = args[0]
+        args = args[1:]
+        if len(args) % 2 != 0 or args == ():
+           raise BaseException(
+              'You must provide an even number of columns to join on.'
+           )
+
+        args_expr = ['{0} = {1}'.format(args[2 * i], args[2 * i + 1]) 
+            for i in range(int(len(args) / 2))]  # int() for Python 3
+        args_expr = ' AND '.join(args_expr)
+        join_str = ' '.join([tbl_name, 'ON', args_expr])
+
+        return join_str
+
+    @staticmethod
+    def replace_and(match):
+        """
+        helper function for indenting AND in WHERE clause
+        """
+        string = match.group(0)
+        raw_newlines = re.subn('AND', '\n      AND', string)[0]
+        out = re.subn('(?<=BETWEEN)( \w+? )\n\s*?(AND)', r'\1\2', raw_newlines)[0]
+        return out
+
+
+
+
+
+
 class QueryComponent(object):
+    #This is the base class that everything else will be added to..
+    # this is where the magic of += is handled, which makes it easy 
+    # to add things quickly to any componene of the overall query..
 
     def __init__(self, header, sep=''):
         self.header = header + ' '
@@ -110,7 +162,7 @@ class QueryComponent(object):
         self.add_item(item)
         return self
 
-    __iand__ = __ior__ = __iadd__
+    __iand__ = __ior__ = __iadd__  # lets set the default for &= and |= to be just += to start..
 
     def add_item(self, item, prefix=''):
         if prefix:
@@ -147,6 +199,8 @@ class QueryComponent(object):
 
 
 class SelectComponent(QueryComponent):
+    # This models the SELECT component, and sends great energy ensuring that the "DISTINCT" and "TOP" syntax are supported
+    # otherwise the actual columns are just stored as a list, which is handled by the parent class.
 
     header = 'SELECT'
     dist_pattern = re.compile(' DISTINCT')
@@ -202,6 +256,11 @@ class SelectComponent(QueryComponent):
         
 
 class JoinComponent(QueryComponent):
+    # like most query components, the joins are just a list of strings...
+    # The exception is that the type of join is stored as a seperate
+    # one would think that this allows for retyping the join later.. but really it just means that we 
+    # do not need to add the word "join" to our string storage... so it just handling the fact that the type of join 
+    # is listed before the word 'JOIN' while the method of the join is listed after.. 
 
     def __init__(self, sep = ''):
         QueryComponent.__init__(self, '', sep)
@@ -225,7 +284,7 @@ class JoinComponent(QueryComponent):
         self.add_item(item, join)
         return self
 
-    __iand__ = __ior__ = __iadd__
+    __iand__ = __ior__ = __iadd__  # again, to start, lets have &= and |= just be the same function as +=  
 
     def __call__(self):
         if self.components:
@@ -246,10 +305,11 @@ class WhereComponent(QueryComponent):
         return self
 
     def __ior__(self, item):
+        # add this to the list, but with a seperator of 'OR', this will be called when someone uses |=
         self.add_item(item, 'OR')
         return self
 
-    __iadd__ = __iand__
+    __iadd__ = __iand__ # unless we use |= (which will invoke our custom built or function) we are using an "AND"
 
     def __str__(self):
         components = self.components
@@ -263,29 +323,3 @@ class WhereComponent(QueryComponent):
 
     __repr__ = __str__
 
-
-
-def build_join(*args):
-    tbl_name = args[0]
-    args = args[1:]
-    if len(args) % 2 != 0 or args == ():
-        raise BaseException(
-            'You must provide an even number of columns to join on.'
-        )
-
-    args_expr = ['{0} = {1}'.format(args[2 * i], args[2 * i + 1]) 
-                 for i in range(int(len(args) / 2))]  # int() for Python 3
-    args_expr = ' AND '.join(args_expr)
-    join_str = ' '.join([tbl_name, 'ON', args_expr])
-
-    return join_str
-
-
-def replace_and(match):
-    """
-    helper function for indenting AND in WHERE clause
-    """
-    string = match.group(0)
-    raw_newlines = re.subn('AND', '\n      AND', string)[0]
-    out = re.subn('(?<=BETWEEN)( \w+? )\n\s*?(AND)', r'\1\2', raw_newlines)[0]
-    return out
