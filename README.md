@@ -15,7 +15,7 @@ Example usage:
     >>> new_query.s += ['col1', 'col2', 'col3']  # can take lists
     >>> new_query.s += 'col4'  # can take single strings
     >>> new_query.w += 'col1 = 1'  # can also take a list (separated by AND)
-    >>> new_query.w &= 'col2 IS NULL'  # handles &= and |= operators
+    >>> new_query.w |= 'col2 IS NULL'  # handles &= and |= operators
     >>> print new_query
     SELECT
         col1,
