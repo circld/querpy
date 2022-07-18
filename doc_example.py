@@ -22,10 +22,9 @@ commands = [
     ">>> new_query.j += 'ex_db.dbo.new_tbl nt ON tbl.id = nt.id'",
     ">>> new_query.s += 'nt.id'",
     ">>> new_query",
-    ">>> from querpy import build_join",
     ">>> new_query.j.clear()",
     ">>> new_query.join_type = 'LEFT'",
-    ">>> new_query.j += build_join('ex_db.dbo.new_tbl nt', 'tbl.id', 'nt.id',"
+    ">>> new_query.j += Query.build_join('ex_db.dbo.new_tbl nt', 'tbl.id', 'nt.id',"
     " 'tbl.city', 'nt.city')",
     ">>> new_query.join_type = ''  # set back to regular join",
     ">>> new_query",
