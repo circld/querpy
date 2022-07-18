@@ -57,11 +57,12 @@ class Query(object):
         self.j = JoinComponent()
         self.w = WhereComponent()
         self.g = QueryComponent('GROUP BY', sep=',')
+        self.l = LimitComponent()
+
 
     @property
     def statement(self):
         # Merges the various SQL componenets into a single SQL statement
-        print(self.ci())
         elements = [self.ci(), self.s(), self.f(), self.j(), self.w(), self.g()]
         full_statement = re.subn(self.where_clean_up, '', ' '.join(elements))[0] # removes messy contents of WHERE statements? Note sure why this is needed or why it is run on the whole SQL statement
         full_statement = re.subn(self.whitespace_regex, '', full_statement)[0]  # flattens pretty print SQL to a single line by removing whitespace
@@ -224,6 +225,21 @@ class CreateInsertComponent(QueryComponent):
 
     def __call__(self):
         return self.header
+
+
+class LimitComponent(QueryComponent):
+    # Adds support for the limit command
+
+    def __iadd__(self, item):
+        #we only have the one item.. should be like '10, 100'
+        #we should add a test to make sure this is correct. 
+        self.components = list() # overwrites whatever was there
+        self.components.append(item) 
+        self.header = ' LIMIT ' 
+
+    def __init__(self):
+        self.header = '' # by default, this is not used.
+        self.components = list() # none to start
 
 
 class SelectComponent(QueryComponent):
