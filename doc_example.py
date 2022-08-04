@@ -31,6 +31,9 @@ commands = [
     ">>> new_query.l += ' 10, 100' ",
     ">>> new_query.g += 'col1' ",
     ">>> new_query.g += 'col3' ",
+    ">>> new_query.o += 'col1' ",
+    ">>> new_query.o += 'col3' ",
+    ">>> new_query",
     ">>> new_query",
     ">>> new_query.statement",
 ]
