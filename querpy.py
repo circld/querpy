@@ -57,13 +57,14 @@ class Query(object):
         self.j = JoinComponent()
         self.w = WhereComponent()
         self.g = QueryComponent('GROUP BY', sep=',')
+        self.o = QueryComponent('ORDER BY', sep=',')
         self.l = LimitComponent()
 
 
     @property
     def statement(self):
         # Merges the various SQL componenets into a single SQL statement
-        elements = [self.ci(), self.s(), self.f(), self.j(), self.w(), self.g(), self.l()]
+        elements = [self.ci(), self.s(), self.f(), self.j(), self.w(), self.g(), self.o(), self.l()]
         full_statement = re.subn(self.where_clean_up, '', ' '.join(elements))[0] # removes messy contents of WHERE statements? Note sure why this is needed or why it is run on the whole SQL statement
         full_statement = re.subn(self.whitespace_regex, '', full_statement)[0]  # flattens pretty print SQL to a single line by removing whitespace
         if full_statement:
@@ -71,6 +72,17 @@ class Query(object):
             return full_statement
         else:
             return ''
+
+    #Some properties that allow us to expose some of the variables in the QueryComponents, as thought they were 
+    #directly on the main Query object
+
+    @property
+    def is_first_data_add(self):
+        return self.ci.is_first_data_add
+
+    @is_first_data_add.setter
+    def is_first_data_add(self, value):
+        self.ci.is_first_data_add = value
 
     @property
     def distinct(self):
@@ -205,7 +217,10 @@ class QueryComponent(object):
 class CreateInsertComponent(QueryComponent):
     # Implements the very first part of a CREATE TABLE db.table AS or INSERT INTO db.table
     # depending on whether the is_first_data_add setting has been set
-
+    # TODO the way this works now, you have to set is_first_data_add BEFORE adding the table
+    # But it should not care whether it was added first or second.. the is_first_data_add 
+    # Should swap between CREATE TABLE and INSERT INTO whenever it is set..
+    # Which means that the behavior of setting the header should happen when the data is being read.. not when it is written...
 
     is_first_data_add = True
 
