@@ -45,7 +45,7 @@ class Query(object):
     )
     fmt_commas = re.compile('(?<=,)\s')
     fmt_and = re.compile('(?<=WHERE).*$', flags=re.S)
-    fmt_or = re.compile('OR')
+    fmt_or = re.compile('\sOR\s')
 
 
 
@@ -123,7 +123,7 @@ class Query(object):
         query = re.subn(self.fmt_join, '\n      ', query)[0]
         query = re.subn(self.fmt_commas, '\n    ', query)[0]
         query = re.subn(self.fmt_and, Query.replace_and, query)[0]
-        query = re.subn(self.fmt_or, '\n      OR', query)[0]
+        query = re.subn(self.fmt_or, '\n      OR ', query)[0]
         
         return query
 
