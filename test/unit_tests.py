@@ -1,3 +1,4 @@
+from builtins import zip
 import unittest as ut
 from querpy import *
 
@@ -287,7 +288,7 @@ class TestQuery(ut.TestCase):
             'JOIN tbl2 ON col1 = col2 AND col3 = col4 '
             'WHERE col1 = col3 AND col4 = col5 AND col5 = col6'
         )
-        subbed = re.subn(self.query.fmt_and, replace_and, string)[0]
+        subbed = re.subn(self.query.fmt_and, Query.replace_and, string)[0]
         self.assertEqual(
             subbed,
             'JOIN tbl2 ON col1 = col2 AND col3 = col4 '
@@ -334,7 +335,7 @@ class TestQuery(ut.TestCase):
     def test_print(self):
         self.query.s += ['col1', 'col2', 'col3']
         self.query.f += 'tbl1 t1'
-        self.query.j += build_join('tbl2 t2', 't1.id', 't2.id', 't1.city',
+        self.query.j += Query.build_join('tbl2 t2', 't1.id', 't2.id', 't1.city',
                                    't2.city')
         self.query.w += ['col1 IS NULL', 'col4 BETWEEN col1 AND col2',
                          'col2 = t1.id', 'col3 BETWEEN 0 AND 10']
@@ -355,14 +356,14 @@ class TestJoinFunction(ut.TestCase):
         self.item2 = ['tbl2 t2', 't2.id', 'oid', 't2.city', 'city']
 
     def test_join_valid_items(self):
-        to_test1 = build_join(*self.item1)
-        to_test2 = build_join(*self.item2)
+        to_test1 = Query.build_join(*self.item1)
+        to_test2 = Query.build_join(*self.item2)
         self.assertEqual(to_test1, 'tbl1 t1 ON t1.id = oid')
         self.assertEqual(to_test2, 'tbl2 t2 ON t2.id = oid AND t2.city = city')
 
     def test_invalid_num_items_passed_as_args(self):
         invalid = self.item2[:-1]
-        self.assertRaises(BaseException, build_join, invalid)
+        self.assertRaises(BaseException, Query.build_join, invalid)
 
 
 if __name__ == '__main__':
